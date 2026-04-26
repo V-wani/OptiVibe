@@ -15,7 +15,7 @@ import JSZip from 'jszip';
 import ComparisonSlider from './components/ComparisonSlider';
 import './App.css';
 
-const API_URL = 'http://localhost:5001/api';
+const API_URL = '/api';
 
 function App() {
   const [files, setFiles] = useState([]);
@@ -369,6 +369,16 @@ function App() {
           </div>
         </div>
       </div>
+      <footer className="mt-auto py-4 border-top">
+        <div className="container text-center">
+          <p className="text-secondary small mb-0">
+            &copy; {new Date().getFullYear()} OptiVibe. All rights reserved.
+          </p>
+          <p className="fw-bold mt-1" style={{ fontSize: '0.9rem', letterSpacing: '0.5px' }}>
+            <span className="text-secondary opacity-50">Made with ❤️ by</span> <span className="gradient-text">Vaibhav Wani</span>
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

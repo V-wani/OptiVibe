@@ -5,6 +5,7 @@
     "start:backend": "cd backend && node index.js",
     "start:frontend": "cd frontend && npm run dev",
     "start:prod": "cd backend && set NODE_ENV=production&& node index.js",
-    "install:all": "cd backend && npm install && cd ../frontend && npm install"
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "build": "npm run install:all && npm run build --prefix frontend"
   }
 }

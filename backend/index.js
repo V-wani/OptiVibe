@@ -32,20 +32,30 @@ app.use(helmet({
 
 // Restricted CORS
 const allowedOrigins = [
-  'http://localhost:5173', // Dev
-  'http://localhost:5001', // Prod
+  'http://localhost:5173',
+  'http://localhost:5001',
+  /\.vercel\.app$/, // Allow all Vercel subdomains
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
+    // Allow same-origin and requests with no origin
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+    
+    const isAllowed = allowedOrigins.some(pattern => {
+      if (pattern instanceof RegExp) return pattern.test(origin);
+      return pattern === origin;
+    });
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS policy violation'), false);
     }
-    return callback(null, true);
-  }
+  },
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 86400 // 24 hours
 }));
 
 // Rate Limiting
@@ -76,6 +86,12 @@ app.post('/api/optimize', limiter, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Strict File Type Validation
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
+    if (!allowedMimeTypes.includes(req.file.mimetype)) {
+      return res.status(400).json({ error: 'Invalid file type. Only JPG, PNG, WebP and AVIF are allowed.' });
     }
 
     const { quality = 'auto', format_type = 'auto', width, height } = req.body;
@@ -146,8 +162,8 @@ app.post('/api/optimize', limiter, upload.single('file'), async (req, res) => {
   }
 });
 
-// Serve static files in production
-if (process.env.NODE_ENV === 'production') {
+// Serve static files in production (only if not on Vercel)
+if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
   const distPath = path.join(__dirname, '../frontend/dist');
   app.use(express.static(distPath));
   
@@ -156,6 +172,10 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port} [Mode: ${process.env.NODE_ENV || 'development'}]`);
-});
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(port, () => {
+    console.log(`Server is running on port ${port} [Mode: ${process.env.NODE_ENV || 'development'}]`);
+  });
+}
+
+module.exports = app;
